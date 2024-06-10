@@ -1,4 +1,19 @@
 ﻿#Requires AutoHotkey v2.0
+
+; Название игры, чтобы окно оставалось активным
+GameName := "Majestic RP"
+; Ширина экрана для размещения подсказки
+ScreenWidth := 2560
+; ваш ОПЗ
+opz := "/do На поясе висит жетон [FIB | CID | 71838]."
+
+; для новых отыгровок
+; поле с быстрым вводом
+; "/pull " getInput("Введите динамик ID", "вытащить")
+
+; для длинных отыгровок можно добавить массив вместо строки текста
+; [текст, ожидать шифт перед продолжение, подсказка]
+
 StateUI:=True
 ExtraUI:=False
 MarkUI := False
@@ -25,7 +40,14 @@ MyGui1.Show()
 WinSetTransColor "222222 70"
 WinSetExStyle + WS_EX_LAYERED|WS_EX_TRANSPARENT
 MyGui1.GetPos(, , &Width,)
-MyGui1.Move(2560-Width,,)
+MyGui1.Move(ScreenWidth-Width,,)
+ActivateGame()
+
+ActivateGame(*)
+{
+    global GameName
+    WinActivate GameName
+}
 
 F12:: 
 {
@@ -43,14 +65,15 @@ F12::
         }
 }
 
-F9:: 
+End:: 
 {
 MyGui := Gui()
-MyGui.Opt("+LastFound +AlwaysOnTop -Caption +ToolWindow")
+MyGui.Opt("+LastFound +AlwaysOnTop -Caption +ToolWindow +Disabled")
 WinSetTransColor "EEAA99 150"
 MyGui.SetFont("w500 s20 cBlack")
-MyGui.Add("Text",, "Перезапуск AHK")
+MyGui.Add("Text",, "Перезапуск AutoHotkey")
 MyGui.Show
+ActivateGame()
 sleep SleepTime
 MyGui.Destroy()
 Reload
@@ -58,31 +81,47 @@ Reload
 
 getInput(title, hint)
 {
-    return InputBox(title, hint, "w250 h100", )    
+    return InputBox(title, hint, "w250 h100", ).Value    
 }
 
 NumpadSub::
 {
-InputBoxObj := getInput("Введите динамик ID", "опз")
-SendInChat("/do Какие идентификационные знаки есть у гражданина @" InputBoxObj.Value " и что на них написано?")
+SendInChat("/do Какие идентификационные знаки есть у гражданина @" getInput("Введите динамик ID", "опз") " и что на них написано?")
 }
- 
+
+WaitKeyRShift(hint:="")
+{
+    global WS_EX_LAYERED
+    global WS_EX_TRANSPARENT
+    MyGui := Gui()
+    MyGui.Opt("+LastFound +AlwaysOnTop -Caption +ToolWindow +Disabled")
+    WinSetTransColor "EEAA99 150"
+    MyGui1.SetFont("w600 s10 c19FF00")
+    MyGui.Add("Text",, "Ожидание RightShift для продолжения.")
+    if StrLen(hint)>0
+        MyGui.Add("Text",, hint)
+    MyGui.Show
+    ActivateGame()
+    WinSetExStyle + WS_EX_LAYERED|WS_EX_TRANSPARENT
+    KeyWait "RShift", "D"
+    MyGui.Destroy()
+    return ""
+} 
 
 Ctrl & Numpad1::
-{
-    SendInChat("/do На поясе висит жетон [FIB | CID | 71838].{enter}")
+{         
+    global opz  
+    SendInChat(opz)
 }
 
 Ctrl & Numpad7::
 {
-    InputBoxObj := getInput("Введите динамик ID", "вытащить")
-    SendInChat("/pull " InputBoxObj.Value)
+    SendInChat("/pull " getInput("Введите динамик ID", "вытащить"))
 }
 
 Ctrl & Numpad9::
 {
-    InputBoxObj := getInput("Введите динамик ID", "посадить")
-    SendInChat("/put " InputBoxObj.Value)
+    SendInChat("/put " getInput("Введите динамик ID", "посадить"))
 }
 
 Ctrl & Numpad4::
@@ -97,9 +136,20 @@ Ctrl & Numpad5::
 
 SendInChat(text, sleep_timer := SleepTime, enter := True)
 {
+    if IsObject(text)
+        {
+            if (text[2])
+                {
+                    if (text.Length>2)
+                        WaitKeyRShift(text[3])
+                    else
+                        WaitKeyRShift()
+                }
+            text:=text[1]
+        }
     sleep sleep_timer
     Sendinput "{t}"
-    sleep sleep_timer
+    sleep sleep_timer    
     if (enter)
         {
             SendInput text
@@ -107,7 +157,7 @@ SendInChat(text, sleep_timer := SleepTime, enter := True)
                 sleep sleep_timer 
             Sendinput " {Enter}"
             return
-        } 
+        }         
     Sendinput text
     return         
 }
@@ -115,7 +165,7 @@ SendInChat(text, sleep_timer := SleepTime, enter := True)
 SendInChatMany(arr, sleep_timer := SleepTime, enter := True)
 {
     for line in arr
-        SendInChat(line, sleep_timer, enter)
+            SendInChat(line, sleep_timer, enter)
 }
 
 ;Esc::
@@ -163,6 +213,7 @@ if (name ="Стирание следов силового допроса")
     {
         text := 
         [
+            ; [текст, ожидать шифт перед продолжение, подсказка]
             "/me достал флеш-карту с боди камеры",
             "/me вставил флеш-карту в корпус компьютера",
             "/me нажал на кнопку включения компьютера",
@@ -232,25 +283,9 @@ if (name ="Полиграф включить")
         "/me надел на 2 пальца левой руки 2 датчика потоотделения",
         "/me надел на человека опоясывающий грудь датчик глубины дыхания",
         "/me подключил измерительные устройства к полиграфу при помощи проводов",
-        "/do Полиграф готов к проведению измерений."
-    ]
-    SendInChatMany(text)
-    return
-}
-if (name ="Полиграф рисует графики")
-{
-    text := 
-    [
-        "/do На экране ноутбука начали рисоваться графики согласно полученным данным."
-    ]
-    SendInChatMany(text)
-    return
-}
-if (name ="Полиграф выключить")
-{
-    text := 
-    [
-        "/me снял с правой руки человека датчик давления и частоты пульса после чего положил его на стол",
+        "/do Полиграф готов к проведению измерений.",
+        ["/do На экране ноутбука начали рисоваться графики согласно полученным данным.", True, "начали рисоваться графики"],
+        ["/me снял с правой руки человека датчик давления и частоты пульса после чего положил его на стол", True, "Полиграф выключить"],
         "/me снял с пальцев правой руки человека датчики потооделения и положил их на стол",
         "/me снял с груди чело-века датчик глубины дыхания и положил его на стол",
         "/do На столе лежат несколько датчиков, стоит включенный ноутбук, а также полиграф.",
@@ -334,8 +369,6 @@ ExtraGUI(*)
                 MyGui2.Add("Button", "Default", "Отпечатки пальцев").OnEvent("Click", Button_click_parser)
                 MyGui2.Add("Text",, "Полиграф")           
                 MyGui2.Add("Button", "Default", "Полиграф включить").OnEvent("Click", Button_click_parser)
-                MyGui2.Add("Button", "Default", "Полиграф рисует графики").OnEvent("Click", Button_click_parser)
-                MyGui2.Add("Button", "Default", "Полиграф выключить").OnEvent("Click", Button_click_parser)
                 MyGui2.Add("Text",, "Диктофон")
                 MyGui2.Add("Button", "Default", "Диктофон включение").OnEvent("Click", Button_click_parser)
                 MyGui2.Add("Button", "Default", "Диктофон выключение").OnEvent("Click", Button_click_parser)
