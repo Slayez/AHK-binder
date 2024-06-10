@@ -17,11 +17,12 @@ opz := "/do На поясе висит жетон [FIB | CID | 71838]."
 StateUI:=True
 ExtraUI:=False
 MarkUI := False
-SleepTime:=300
+SleepTime:=350
 
 MyGui1 := Gui()
 MyGui2 := Gui()
 MyGui3 := Gui()
+temp := ""
 
 WS_EX_TRANSPARENT := 0x20
 WS_EX_LAYERED := 0x80000
@@ -41,6 +42,7 @@ WinSetTransColor "222222 70"
 WinSetExStyle + WS_EX_LAYERED|WS_EX_TRANSPARENT
 MyGui1.GetPos(, , &Width,)
 MyGui1.Move(ScreenWidth-Width,,)
+
 ActivateGame()
 
 ActivateGame(*)
@@ -81,7 +83,10 @@ Reload
 
 getInput(title, hint)
 {
-    return InputBox(title, hint, "w250 h100", ).Value    
+    global temp
+    ib := InputBox(title, hint, "w250 h100", temp)
+    temp := ib.Value
+    return ib.Value    
 }
 
 NumpadSub::
